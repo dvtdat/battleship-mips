@@ -16,11 +16,11 @@
 
 ### DRAW BACKGROUND SECTION
 
-	la 	$t0, frameBuffer              # load frame buffer addres
-	li 	$t1, 524288                   # save 1024 x 512 pixels
-	li 	$t2, 0x00ffff00               # load light gray color
+  la  $t0, frameBuffer              # load frame buffer addres
+  li  $t1, 524288                   # save 1024 x 512 pixels
+  li  $t2, 0x00ffff00               # load light gray color
 l1:
-	sw   	$t2, 0($t0)
-	addi 	$t0, $t0, 4                 # advance to next pixel position in display
-	addi 	$t1, $t1, -1                # decrement number of pixels
-	bnez 	$t1, l1                     # repeat while number of pixels is not zero
+  sw    $t2, 0($t0)
+  addi  $t0, $t0, 4                 # advance to next pixel position in display
+  addi  $t1, $t1, -1                # decrement number of pixels
+  bnez  $t1, l1                     # repeat while number of pixels is not zero
