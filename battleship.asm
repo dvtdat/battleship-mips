@@ -7,7 +7,7 @@
 # Student: Doan Viet Tien Dat, 2252141, dat.doanviettien@hcmut.edu.vn
 # Lecturer: Pham Quoc Cuong - Faculty of Computer Science and Engineering
 #
-#	GitHub repository: github.com/dvtdat/battleship-mips
+# GitHub repository: github.com/dvtdat/battleship-mips
 #
 
 .data
