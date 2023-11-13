@@ -1,13 +1,13 @@
 #
-# CO2003 BATTLESHIP
+#     CO2003 BATTLESHIP
 #
-# HK231 - CO2003 Computer Architecture Assignment (11-12/2023)
-# Ho Chi Minh City University of Technology - VNUHCM
+#     HK231 - CO2003 Computer Architecture Assignment (11-12/2023)
+#     Ho Chi Minh City University of Technology - VNUHCM
 #
-# Student: Doan Viet Tien Dat, 2252141, dat.doanviettien@hcmut.edu.vn
-# Lecturer: Pham Quoc Cuong - Faculty of Computer Science and Engineering
+#     Student: Doan Viet Tien Dat, 2252141, dat.doanviettien@hcmut.edu.vn
+#     Lecturer: Pham Quoc Cuong - Faculty of Computer Science and Engineering
 #
-# GitHub repository: github.com/dvtdat/battleship-mips
+#     GitHub repository: github.com/dvtdat/battleship-mips
 #
 
 .data
