@@ -437,13 +437,12 @@ equalX:
 
   lw    $t2, 4($s5)
   lw    $t3, 12($s5)
-  
-  blt   $t2, $t3, noSwap
+  blt   $t2, $t3, noSwapY
   
   sw    $t3, 4($s5)
   sw    $t2, 12($s5)
 
-noSwap:
+noSwapY:
   lw    $t4, 4($s5)
   lw    $t3, 12($s5)
 
@@ -475,7 +474,47 @@ noSwap:
   j endOneInput
 
 equalY:
+  lw    $t2, 4($s5)
+  blt   $t0, $t1, noSwapX
+
+  sw    $t0, 8($s5)
+  sw    $t1, 0($s5)
+
+noSwapX:
+  lw    $t0, 0($s5)
+  lw    $t1, 8($s5)
+  addi  $t1, $t1, 1
+
+  sll   $t5, $t0, 2
+  mul   $t5, $t5, 7
+  sll   $a0, $t2, 2
+
+  add   $t5, $t5, $a0
+  add   $t5, $t5, $s6
+  move  $t6, $t5
   
+  leY1:
+    lw    $v0, 0($t6)
+    beq   $v0, 1, inputFailed
+    add   $t6, $t6, 28
+
+    addi  $t0, $t0, 1
+    blt   $t0, $t1, leY1
+
+  li    $v0, 1
+  move  $t6, $t5
+  lw    $t0, 0($s5)
+
+  leY2:
+    sw    $v0, 0($t6)
+    add   $t6, $t6, 28
+
+    addi  $t0, $t0, 1
+    blt   $t0, $t1, leY2
+
+
+endOneInput:
+
 #### temporary print
 
 la $t0, playerA 
@@ -510,9 +549,6 @@ print_matrix:
 end_print:
 
 #### end temporary print
-
-
-endOneInput
 
   addi  $s7, $s7, 4
   addi  $v1, $v1, 1
