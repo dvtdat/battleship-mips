@@ -214,32 +214,31 @@ drawBackground:
   add $t0, $t0, $t1                 # add to the base address of the frame buffer
 
   li    $t5, 0                      # counter for rows
-lbg1:
-  li    $t6, 0                      # counter for columns
-lbg2:
-  lw    $t4, 0($t7)                 # load pixel from sprite
-  sw    $t4, 0($t0)                 # draw pixel
 
-  addi  $t0, $t0, 4                 # advance to next pixel position in display
-  addi  $t7, $t7, 4                 # advance to next pixel in sprite
-  addi  $t6, $t6, 1                 # increment column counter
-  blt   $t6, $t3, lbg2              # repeat for each column
+  lbg1:
+    li    $t6, 0                    # counter for columns
 
-  addi  $t0, $t0, 1024              # advance to next row in display
-  sll   $t8, $t3, 2
-  sub   $t0, $t0, $t8               # subtract the width of the sprite
-  addi  $t5, $t5, 1                 # increment row counter
-  blt   $t5, $t9, lbg1              # repeat for each row
+    lbg2:
+      lw    $t4, 0($t7)             # load pixel from sprite
+      sw    $t4, 0($t0)             # draw pixel
+
+      addi  $t0, $t0, 4             # advance to next pixel position in display
+      addi  $t7, $t7, 4             # advance to next pixel in sprite
+      addi  $t6, $t6, 1             # increment column counter
+      blt   $t6, $t3, lbg2          # repeat for each column
+
+      addi  $t0, $t0, 1024          # advance to next row in display
+      sll   $t8, $t3, 2
+      sub   $t0, $t0, $t8           # subtract the width of the sprite
+      addi  $t5, $t5, 1             # increment row counter
+      blt   $t5, $t9, lbg1          # repeat for each row
 
   j gameplay
 
 ### DRAW BATTLESHIP
-# Input: s3, s4
-# Constant used: t3, t9
-# Variable used: t1, t2, t4, t5, t6, t7, t8
 drawBattleship:
   la    $t0, frameBuffer            # load frame buffer address
-  la    $t7, battleshipSunkSprite   # load circle sprite address
+  la    $t7, battleshipSprite       # load circle sprite address
   addi  $t1, $s3, 0                 # x-coordinate
   addi  $t2, $s4, 0                 # y-coordinate
   li    $t3, 10                     # width of the sprite
@@ -252,25 +251,25 @@ drawBattleship:
 
   li    $t5, 0                      # counter for rows
 
-lbts1:
-  li    $t6, 0                      # counter for columns
+  lbts1:
+    li    $t6, 0                    # counter for columns
 
-lbts2:
-  lw    $t4, 0($t7)                 # load pixel from sprite
-  sw    $t4, 0($t0)                 # draw pixel
+    lbts2:
+      lw    $t4, 0($t7)             # load pixel from sprite
+      sw    $t4, 0($t0)             # draw pixel
 
-  addi  $t0, $t0, 4                 # advance to next pixel position in display
-  addi  $t7, $t7, 4                 # advance to next pixel in sprite
-  addi  $t6, $t6, 1                 # increment column counter
-  blt   $t6, $t3, lbts2             # repeat for each column
+      addi  $t0, $t0, 4             # advance to next pixel position in display
+      addi  $t7, $t7, 4             # advance to next pixel in sprite
+      addi  $t6, $t6, 1             # increment column counter
+      blt   $t6, $t3, lbts2         # repeat for each column
 
-  addi  $t0, $t0, 1024              # advance to next row in display
-  sll   $t8, $t3, 2
-  sub   $t0, $t0, $t8               # subtract the width of the sprite
-  addi  $t5, $t5, 1                 # increment row counter
-  blt   $t5, $t9, lbts1             # repeat for each row
+      addi  $t0, $t0, 1024          # advance to next row in display
+      sll   $t8, $t3, 2
+      sub   $t0, $t0, $t8           # subtract the width of the sprite
+      addi  $t5, $t5, 1             # increment row counter
+      blt   $t5, $t9, lbts1         # repeat for each row
 
-  # j exitDrawBattleship
+    j exitDrawBattleship
 
 ### MAIN GAMEPLAY
 gameplay:
@@ -516,37 +515,40 @@ noSwapX:
 endOneInput:
 
 #### temporary print
+  la    $s0, playerA 
+  li    $s1, 0
+  li    $s5, 7
+  li    $s3, 30
 
-la $t0, playerA 
-li $t1, 0
-li $t7, 7
-li $t8, 7
-print_matrix:
-    beq $t1, $t7, end_print  # If we've printed all rows, exit the loop
+printPlayer:
+  beq   $s1, $s5, endPrint
+  li    $s2, 0
+  li    $s4, 30
 
-    li $t2, 0  # Initialize the column counter to 0
+  printRow:
+    beq   $s2, $s5, endRow
 
-    print_row:
-        beq $t2, $t8, end_row  # If we've printed all columns in the current row, go to the next row
+    lw    $a0, 0($s0)
+    beq   $a0, 1, drawBattleship
+    exitDrawBattleship:
 
-        lw $a0, 0($t0)  # Load the current element into $a0
-        li $v0, 1       # Set $v0 to 1 for the print integer service
-        syscall         # Print the current element
+    li    $v0, 1
+    syscall
 
-        addi $t0, $t0, 4  # Go to the next element in the matrix
-        addi $t2, $t2, 1  # Increment the column counter
-        j print_row       # Jump back to the start of the inner loop
+    addi  $s0, $s0, 4
+    addi  $s4, $s4, 10
+    addi  $s2, $s2, 1
+    j printRow
 
-    end_row:
-        # Print a newline character after each row
-        li $v0, 4       # Set $v0 to 4 for the print string service
-        la $a0, endl # Load the address of the newline character into $a0
-        syscall         # Print the newline character
+  endRow:
+    li    $v0, 4
+    la    $a0, endl
+    syscall
 
-        addi $t1, $t1, 1  # Increment the row counter
-        j print_matrix    # Jump back to the start of the outer loop
-
-end_print:
+    addi  $s1, $s1, 1
+    addi  $s3, $s3, 10
+    j     printPlayer
+endPrint:
 
 #### end temporary print
 
