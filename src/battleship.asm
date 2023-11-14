@@ -430,39 +430,58 @@ lrp:
   la    $s6, playerA
   bne   $t0, $t1, equalY
 
-equalX:
+equalX:  
+  sll   $t5, $t0, 2
+  mul   $t5, $t5, 7
+  add   $t5, $t5, $s6
+
   lw    $t2, 4($s5)
   lw    $t3, 12($s5)
+  
   blt   $t2, $t3, noSwap
   
   sw    $t3, 4($s5)
   sw    $t2, 12($s5)
 
-  noSwap:
-    lw    $t3, 12($s5)
-    lw    $t4, 4($s5)
+noSwap:
+  lw    $t4, 4($s5)
+  lw    $t3, 12($s5)
 
-  leX:
-    sll   $t5, $t0, 2
-    add   $t5, $t5, $s6
-    
-    li    $v0, 1
-    sw    $v0, 0($t5)
+  addi  $t3, $t3, 1
+  sll   $a0, $t4, 2
+  add   $t5, $t5, $a0
+  move  $t6, $t5
+
+  leX1:
+    lw    $v0, 0($t6)
+    beq   $v0, 1, inputFailed
+    add   $t6, $t6, 4
+
 
     addi  $t4, $t4, 1
-    blt   $t4, $t3, leX
+    blt   $t4, $t3, leX1
 
+  lw    $t4, 4($s5)  
+  move  $t6, $t5
+  li    $v0, 1
 
-####
-# Assuming that $s6 contains the base address of the matrix
-# Assuming that $s7 contains the number of rows in the matrix
-# Assuming that $s8 contains the number of columns in the matrix
+  leX2:
+    sw    $v0, 0($t6)
+    add   $t6, $t6, 4
+
+    addi  $t4, $t4, 1
+    blt   $t4, $t3, leX2
+
+  j endOneInput
+
+equalY:
+  
+#### temporary print
 
 la $t0, playerA 
 li $t1, 0
 li $t7, 7
 li $t8, 7
-
 print_matrix:
     beq $t1, $t7, end_print  # If we've printed all rows, exit the loop
 
@@ -490,13 +509,10 @@ print_matrix:
 
 end_print:
 
+#### end temporary print
 
 
-
-
-####
-
-equalY:
+endOneInput
 
   addi  $s7, $s7, 4
   addi  $v1, $v1, 1
