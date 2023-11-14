@@ -170,7 +170,6 @@
   errorBound:       .asciiz "Input Error! Out of bound\n"
   replayPrompt:     .asciiz "Rematch? (Y/N) "
   shipPrompt:       .asciiz "Input for ship size "
-
   # Input for Player A
   promptAx0:        .asciiz "Player 1 | Enter X-bow: "
   promptAy0:        .asciiz "Player 1 | Enter Y-bow: "
@@ -193,6 +192,7 @@
   input:            .word 0, 0, 0, 0
   playerA:          .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   playerB:          .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  toggleInput:      .word 0
 .text
 
 replay:
@@ -239,11 +239,19 @@ drawBackground:
 drawBattleship:
   la    $t0, frameBuffer            # load frame buffer address
   la    $t7, battleshipSprite       # load circle sprite address
+  
+  la    $a0, toggleInput
+  lw    $a1, 0($a0)                 # load current input state
+
   addi  $t1, $s3, 0                 # x-coordinate
   addi  $t2, $s4, 0                 # y-coordinate
   li    $t3, 10                     # width of the sprite
   li    $t9, 10                     # height of the sprite
 
+  beq   $a1, 0, noOffset
+  addi  $t2, $t2, 126
+
+noOffset:
   mul   $t1, $t1, 256               # convert x-coordinate to row number
   add   $t1, $t1, $t2               # add y-coordinate to get the pixel position
   sll   $t1, $t1, 2                 # multiply by 4 to get the byte address
@@ -300,6 +308,9 @@ lrp:
   li    $v0, 4
   syscall
 
+  lw    $a1, toggleInput
+  beq   $a1, 1, readB
+
   la    $a0, promptAx0               # load prompt
   li    $v0, 4                       # print to console
   syscall
@@ -343,6 +354,53 @@ lrp:
   li    $v0, 4
   syscall
 
+  j checkValid
+
+readB:
+  la    $a0, promptBx0               # load prompt
+  li    $v0, 4                       # print to console
+  syscall
+
+  li    $v0, 5                       # read from console
+  syscall
+  addi  $v0, $v0, -1
+  sw    $v0, 0($s5)                  # x0 store in input[0]
+  addi  $s5, $s5, 4
+  
+  la    $a0, promptBy0               # load prompt
+  li    $v0, 4                       # print to console
+  syscall
+
+  li    $v0, 5                       # read from console
+  syscall
+  addi  $v0, $v0, -1
+  sw    $v0, 0($s5)                  # y0 store in input[1]
+  addi  $s5, $s5, 4
+  
+  la    $a0, promptBx1               # load prompt
+  li    $v0, 4                       # print to console
+  syscall
+
+  li    $v0, 5                       # read from console
+  syscall
+  addi  $v0, $v0, -1
+  sw    $v0, 0($s5)                  # x1 store in input[3]
+  addi  $s5, $s5, 4
+  
+  la    $a0, promptBy1               # load prompt
+  li    $v0, 4                       # print to console
+  syscall
+
+  li    $v0, 5                       # read from console
+  syscall
+  addi  $v0, $v0, -1
+  sw    $v0, 0($s5)                  # y1 store in input[4]
+  
+  la    $a0, endl                    # print endl
+  li    $v0, 4
+  syscall
+
+checkValid:
   ## Check valid input
   la    $s5, input                   # condition A: $s1 = (xA < 7 && xB < 7 && yA < 7 && yB < 7 && xA >= 0 && xB >= 0 && yA >= 0 && yB >= 0)
   li    $s1, 1
@@ -426,7 +484,16 @@ lrp:
   la    $s5, input
   lw    $t0, 0($s5)
   lw    $t1, 8($s5)
-  la    $s6, playerA
+  
+  lw    $a1, toggleInput
+  beq   $a1, 1, setPlayerB
+  la    $s6, playerA 
+  j     exitSetPlayerB
+
+setPlayerB:
+  la    $s6, playerB
+
+exitSetPlayerB:
   bne   $t0, $t1, equalY
 
 equalX:  
@@ -511,11 +578,10 @@ noSwapX:
     addi  $t0, $t0, 1
     blt   $t0, $t1, leY2
 
-
 endOneInput:
 
 #### temporary print
-  la    $s0, playerA 
+  move  $s0, $s6
   li    $s1, 0
   li    $s5, 7
   li    $s3, 30
@@ -532,6 +598,7 @@ printPlayer:
     beq   $a0, 1, drawBattleship
     exitDrawBattleship:
 
+    lw    $a0, 0($s0)
     li    $v0, 1
     syscall
 
@@ -550,12 +617,20 @@ printPlayer:
     j     printPlayer
 endPrint:
 
-#### end temporary print
-
   addi  $s7, $s7, 4
   addi  $v1, $v1, 1
   blt   $v1, 6, lrp                  # loop until complete all 6 ship
 
+  la    $a0, toggleInput
+  lw    $a1, 0($a0)
+  addi  $a1, $a1, 1
+  sw    $a1, 0($a0)
+
+  li    $a0, 2
+  beq   $a1, $a0, finishInput        # if there has been 02 turn of input, finish input
+  j readPlayer
+
+finishInput:
 
   li    $v0, 10                      # exit program
   syscall
