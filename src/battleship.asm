@@ -164,11 +164,13 @@
 ### PROMPTS
   # Utilities
   endl:             .asciiz "\n"
+  colon:            .asciiz ": "
   errorFormat:      .asciiz "Input Error! Wrong Format\n"
   errorCollision:   .asciiz "Input Error! Collide with a previous ship\n"
   errorBound:       .asciiz "Input Error! Out of bound\n"
-  replayPrompt:     .asciiz "Rematch? (Y/N)"
+  replayPrompt:     .asciiz "Rematch? (Y/N) "
   shipPrompt:       .asciiz "Input for ship size "
+
   # Input for Player A
   promptAx0:        .asciiz "Player 1 | Enter X-bow: "
   promptAy0:        .asciiz "Player 1 | Enter Y-bow: "
@@ -199,78 +201,105 @@ replay:
 
 ### DRAW BACKGROUND SECTION
 drawBackground:
-  la  $t0, frameBuffer            # load frame buffer address
-  la  $t7, backgroundSprite       # load circle sprite address
-  li  $t1, 0                      # x-coordinate
-  li  $t2, 0                      # y-coordinate
-  li  $t3, 256                    # width of the sprite
-  li  $t9, 128                    # height of the sprite
+  la  $t0, frameBuffer              # load frame buffer address
+  la  $t7, backgroundSprite         # load circle sprite address
+  li  $t1, 0                        # x-coordinate
+  li  $t2, 0                        # y-coordinate
+  li  $t3, 256                      # width of the sprite
+  li  $t9, 128                      # height of the sprite
 
-  mul $t1, $t1, 256               # convert x-coordinate to row number
-  add $t1, $t1, $t2               # add y-coordinate to get the pixel position
-  sll $t1, $t1, 2                 # multiply by 4 to get the byte address
-  add $t0, $t0, $t1               # add to the base address of the frame buffer
+  mul $t1, $t1, 256                 # convert x-coordinate to row number
+  add $t1, $t1, $t2                 # add y-coordinate to get the pixel position
+  sll $t1, $t1, 2                   # multiply by 4 to get the byte address
+  add $t0, $t0, $t1                 # add to the base address of the frame buffer
 
-  li  $t5, 0                      # counter for rows
+  li    $t5, 0                      # counter for rows
 lbg1:
-  li  $t6, 0                      # counter for columns
+  li    $t6, 0                      # counter for columns
 lbg2:
-  lw   $t4, 0($t7)                # load pixel from sprite
-  sw   $t4, 0($t0)                # draw pixel
+  lw    $t4, 0($t7)                 # load pixel from sprite
+  sw    $t4, 0($t0)                 # draw pixel
 
-  addi $t0, $t0, 4                # advance to next pixel position in display
-  addi $t7, $t7, 4                # advance to next pixel in sprite
-  addi $t6, $t6, 1                # increment column counter
-  blt  $t6, $t3, lbg2             # repeat for each column
+  addi  $t0, $t0, 4                 # advance to next pixel position in display
+  addi  $t7, $t7, 4                 # advance to next pixel in sprite
+  addi  $t6, $t6, 1                 # increment column counter
+  blt   $t6, $t3, lbg2              # repeat for each column
 
-  addi $t0, $t0, 1024             # advance to next row in display
-  sll  $t8, $t3, 2
-  sub  $t0, $t0, $t8              # subtract the width of the sprite
-  addi $t5, $t5, 1                # increment row counter
-  blt  $t5, $t9, lbg1             # repeat for each row
+  addi  $t0, $t0, 1024              # advance to next row in display
+  sll   $t8, $t3, 2
+  sub   $t0, $t0, $t8               # subtract the width of the sprite
+  addi  $t5, $t5, 1                 # increment row counter
+  blt   $t5, $t9, lbg1              # repeat for each row
 
   j gameplay
 
 ### DRAW BATTLESHIP
+# Input: s3, s4
+# Constant used: t3, t9
+# Variable used: t1, t2, t4, t5, t6, t7, t8
 drawBattleship:
-  la  $t0, frameBuffer            # load frame buffer address
-  la  $t7, battleshipSunkSprite   # load circle sprite address
-  addi  $t1, $s3, 0               # x-coordinate
-  addi  $t2, $s4, 0               # y-coordinate
-  li  $t3, 10                     # width of the sprite
-  li  $t9, 10                     # height of the sprite
+  la    $t0, frameBuffer            # load frame buffer address
+  la    $t7, battleshipSunkSprite   # load circle sprite address
+  addi  $t1, $s3, 0                 # x-coordinate
+  addi  $t2, $s4, 0                 # y-coordinate
+  li    $t3, 10                     # width of the sprite
+  li    $t9, 10                     # height of the sprite
 
-  mul $t1, $t1, 256               # convert x-coordinate to row number
-  add $t1, $t1, $t2               # add y-coordinate to get the pixel position
-  sll $t1, $t1, 2                 # multiply by 4 to get the byte address
-  add $t0, $t0, $t1               # add to the base address of the frame buffer
+  mul   $t1, $t1, 256               # convert x-coordinate to row number
+  add   $t1, $t1, $t2               # add y-coordinate to get the pixel position
+  sll   $t1, $t1, 2                 # multiply by 4 to get the byte address
+  add   $t0, $t0, $t1               # add to the base address of the frame buffer
 
-  li  $t5, 0                      # counter for rows
+  li    $t5, 0                      # counter for rows
+
 lbts1:
-  li  $t6, 0                      # counter for columns
+  li    $t6, 0                      # counter for columns
+
 lbts2:
-  lw   $t4, 0($t7)                # load pixel from sprite
-  sw   $t4, 0($t0)                # draw pixel
+  lw    $t4, 0($t7)                 # load pixel from sprite
+  sw    $t4, 0($t0)                 # draw pixel
 
-  addi $t0, $t0, 4                # advance to next pixel position in display
-  addi $t7, $t7, 4                # advance to next pixel in sprite
-  addi $t6, $t6, 1                # increment column counter
-  blt  $t6, $t3, lbts2            # repeat for each column
+  addi  $t0, $t0, 4                 # advance to next pixel position in display
+  addi  $t7, $t7, 4                 # advance to next pixel in sprite
+  addi  $t6, $t6, 1                 # increment column counter
+  blt   $t6, $t3, lbts2             # repeat for each column
 
-  addi $t0, $t0, 1024             # advance to next row in display
-  sll  $t8, $t3, 2
-  sub  $t0, $t0, $t8              # subtract the width of the sprite
-  addi $t5, $t5, 1                # increment row counter
-  blt  $t5, $t9, lbts1            # repeat for each row
+  addi  $t0, $t0, 1024              # advance to next row in display
+  sll   $t8, $t3, 2
+  sub   $t0, $t0, $t8               # subtract the width of the sprite
+  addi  $t5, $t5, 1                 # increment row counter
+  blt   $t5, $t9, lbts1             # repeat for each row
 
   # j exitDrawBattleship
 
 ### MAIN GAMEPLAY
 gameplay:
 
-## PLAYER INPUT - s5, s6, s7, a1 - input[4]: $s5
-readPlayerA:
+## PLAYER INPUT
+readPlayer:
+  la    $s7, shipSize
+  li    $v1, 0
+  j     lrp
+
+inputFailed:
+  la    $a0, errorFormat
+  li    $v0, 4
+  syscall
+
+lrp:
   la    $s5, input                   # load address of input array into $s5
+
+  la    $a0, shipPrompt              # print "Input for ship size "
+  li    $v0, 4
+  syscall
+
+  lw    $a0, 0($s7)                  # print current ship size
+  li    $v0, 1
+  syscall
+
+  la    $a0, endl                    # print endl
+  li    $v0, 4
+  syscall
 
   la    $a0, promptAx0               # load prompt
   li    $v0, 4                       # print to console
@@ -310,47 +339,169 @@ readPlayerA:
   syscall
   addi  $v0, $v0, -1
   sw    $v0, 0($s5)                  # y1 store in input[4]
-
-  # condition A: $s1 = (xA < 7 && xB < 7 && yA < 7 && yB < 7 && xA >= 0 && xB >= 0 && yA >= 0 && yB >= 0)
-
-  la    $s5, input                # reload input[] into $s5
-
-  lw    $s6, 0($s5)
-  slti  $t0, $s6, 7               # xA < 7
-  slt   $t4, $s6, $zero           # xA < 0
-  xori  $t4, $t4, 1
-  addi  $s5, $s5, 4
-
-  lw    $s6, 0($s5)
-  slti  $t1, $s6, 7               # yA < 7
-  slt   $t5, $s6, $zero           # yA < 0
-  xori  $t5, $t5, 1
-  addi  $s5, $s5, 4
-
-  lw    $s6, 0($s5)
-  slti  $t2, $s6, 7               # xB < 7
-  slt   $t6, $s6, $zero           # xB < 0
-  xori  $t6, $t6, 1
-  addi  $s5, $s5, 4
-
-  lw    $s6, 0($s5)
-  slti  $t3, $s6, 7               # yB < 7
-  slt   $t7, $s6, $zero           # yB < 0
-  xori  $t7, $t7, 1
-
-  and   $t8, $t0, $t1
-  and   $t8, $t8, $t2
-  and   $t8, $t8, $t3
-  and   $t8, $t8, $t4
-  and   $t8, $t8, $t5
-  and   $t8, $t8, $t6
-  and   $s1, $t8, $t7
   
-  move  $a0, $s1
-  li    $v0, 1
+  la    $a0, endl                    # print endl
+  li    $v0, 4
   syscall
+
+  ## Check valid input
+  la    $s5, input                   # condition A: $s1 = (xA < 7 && xB < 7 && yA < 7 && yB < 7 && xA >= 0 && xB >= 0 && yA >= 0 && yB >= 0)
+  li    $s1, 1
+
+  lw    $s6, 0($s5)
+  slti  $t0, $s6, 7                  # xA < 7
+  and   $s1, $s1, $t0
+  slt   $t0, $s6, $zero              # xA < 0
+  xori  $t0, $t0, 1
+  and   $s1, $s1, $t0
+  addi  $s5, $s5, 4
+
+  lw    $s6, 0($s5)
+  slti  $t0, $s6, 7                  # yA < 7
+  and   $s1, $s1, $t0
+  slt   $t0, $s6, $zero              # yA < 0
+  xori  $t0, $t0, 1
+  and   $s1, $s1, $t0
+  addi  $s5, $s5, 4
   
-  # condition B: $s2 = (abs(xA + yA - xB - yB) == shipSize[ship] - 1)
+  lw    $s6, 0($s5)
+  slti  $t0, $s6, 7                  # xB < 7
+  and   $s1, $s1, $t0
+  slt   $t0, $s6, $zero              # xB < 0
+  xori  $t0, $t0, 1
+  and   $s1, $s1, $t0
+  addi  $s5, $s5, 4
 
-  # condition C: $s3 = (xA == xB || yA == yB)
+  lw    $s6, 0($s5)
+  slti  $t0, $s6, 7                  # yB < 7
+  and   $s1, $s1, $t0
+  slt   $t0, $s6, $zero              # yB < 0
+  xori  $t0, $t0, 1
+  and   $s1, $s1, $t0                # $s1: result of condition A
 
+  la    $s5, input                   # condition B: $s2 = (abs(xA + yA - xB - yB) == shipSize[ship] - 1)
+  li    $t0, 0
+
+  lw    $s4, 0($s7)
+  addi  $s4, $s4, -1
+
+  lw    $s6, 0($s5)
+  addi  $s5, $s5, 4
+  add   $t0, $t0, $s6
+  
+  lw    $s6, 0($s5)
+  addi  $s5, $s5, 4
+  add   $t0, $t0, $s6
+
+  lw    $s6, 0($s5)
+  addi  $s5, $s5, 4
+  sub   $t0, $t0, $s6
+
+  lw    $s6, 0($s5)
+  sub   $t0, $t0, $s6
+
+  slt   $t3, $t0, $zero
+  sub   $t4, $zero, $t0
+  movn  $t0, $t4, $t3
+
+  seq   $s2, $t0, $s4
+
+  la    $s5, input                   # condition C: $s3 = (xA == xB || yA == yB)
+
+  lw    $t0, 0($s5)                  # load xA
+  lw    $t1, 4($s5)                  # load yA
+  lw    $t2, 8($s5)                  # load xB
+  lw    $t3, 12($s5)                 # load yB
+
+  seq   $t4, $t0, $t2                # xA == xB
+  seq   $t5, $t1, $t3                # yA == yB
+
+  or    $s3, $t4, $t5                # $s3: result of condition C
+
+  and   $t3, $s1, $s2                # check (conditionA && conditionB && conditionC)
+  and   $t3, $t3, $s3
+
+  beqz  $t3, inputFailed             # if one of the conditions failed, make user input again
+
+  ## Check collision & input
+  la    $s5, input
+  lw    $t0, 0($s5)
+  lw    $t1, 8($s5)
+  la    $s6, playerA
+  bne   $t0, $t1, equalY
+
+equalX:
+  lw    $t2, 4($s5)
+  lw    $t3, 12($s5)
+  blt   $t2, $t3, noSwap
+  
+  sw    $t3, 4($s5)
+  sw    $t2, 12($s5)
+
+  noSwap:
+    lw    $t3, 12($s5)
+    lw    $t4, 4($s5)
+
+  leX:
+    sll   $t5, $t0, 2
+    add   $t5, $t5, $s6
+    
+    li    $v0, 1
+    sw    $v0, 0($t5)
+
+    addi  $t4, $t4, 1
+    blt   $t4, $t3, leX
+
+
+####
+# Assuming that $s6 contains the base address of the matrix
+# Assuming that $s7 contains the number of rows in the matrix
+# Assuming that $s8 contains the number of columns in the matrix
+
+la $t0, playerA 
+li $t1, 0
+li $t7, 7
+li $t8, 7
+
+print_matrix:
+    beq $t1, $t7, end_print  # If we've printed all rows, exit the loop
+
+    li $t2, 0  # Initialize the column counter to 0
+
+    print_row:
+        beq $t2, $t8, end_row  # If we've printed all columns in the current row, go to the next row
+
+        lw $a0, 0($t0)  # Load the current element into $a0
+        li $v0, 1       # Set $v0 to 1 for the print integer service
+        syscall         # Print the current element
+
+        addi $t0, $t0, 4  # Go to the next element in the matrix
+        addi $t2, $t2, 1  # Increment the column counter
+        j print_row       # Jump back to the start of the inner loop
+
+    end_row:
+        # Print a newline character after each row
+        li $v0, 4       # Set $v0 to 4 for the print string service
+        la $a0, endl # Load the address of the newline character into $a0
+        syscall         # Print the newline character
+
+        addi $t1, $t1, 1  # Increment the row counter
+        j print_matrix    # Jump back to the start of the outer loop
+
+end_print:
+
+
+
+
+
+####
+
+equalY:
+
+  addi  $s7, $s7, 4
+  addi  $v1, $v1, 1
+  blt   $v1, 6, lrp                  # loop until complete all 6 ship
+
+
+  li    $v0, 10                      # exit program
+  syscall
