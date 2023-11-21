@@ -5,9 +5,8 @@
 #     Ho Chi Minh City University of Technology - VNUHCM
 #
 #     Student: Doan Viet Tien Dat, 2252141, dat.doanviettien@hcmut.edu.vn
-#     Lecturer: Pham Quoc Cuong - Faculty of Computer Science and Engineering
+#     Lecturer: Pham Quoc Cuong, Faculty of Computer Science and Engineering
 #
-#     GitHub repository: github.com/dvtdat/battleship-mips
 #
 
 .data
@@ -328,8 +327,10 @@
   # Main Gameplay
   hitA:             .asciiz "Player 1 | HITS!\n"
   hitB:             .asciiz "Player 2 | HITS!\n"
-  turnA:            .asciiz "Player 1 turn\n"
-  turnB:            .asciiz "Player 2 turn\n"
+  turnAx:           .asciiz "Player 1 | Enter shooting x-coordinate: "
+  turnAy:           .asciiz "Player 1 | Enter shooting y-coordinate: "
+  turnBx:           .asciiz "Player 2 | Enter shooting x-coordinate: "
+  turnBy:           .asciiz "Player 2 | Enter shooting y-coordinate: "
   winA:             .asciiz "Player 1 WIN!\n"
   winB:             .asciiz "Player 2 WIN!\n"
 ### GAMEPLAY DATAS
@@ -651,7 +652,7 @@ lrp:
   addi  $s5, $s5, 4
 
   jal   checkBound
-  beqz  $s1, inputFailed
+  beqz  $a1, inputFailed
 
   li    $s3, 113
   li    $s4, 161
@@ -780,10 +781,10 @@ readB:
 
 checkBound:
   slti  $t0, $v0, 7                  # xA < 7
-  and   $s1, $t0, $t0
+  and   $a1, $t0, $t0
   slt   $t0, $v0, $zero              # xA < 0
   xori  $t0, $t0, 1
-  and   $s1, $s1, $t0
+  and   $a1, $a1, $t0
   jr    $ra
 
 checkValid:  
@@ -1051,6 +1052,61 @@ finishInput:
   li    $t9, 12
   li    $t4, 0x00084b83              # cover the input line
   jal   drawColor
+
+### SHOOTING GAMEPLAY
+  li    $t1, 1                       # toggle
+
+loopShoot:
+
+inputTurnFailed:
+  # beqz  $t1, playerBTurn
+
+playerATurn:
+  la    $a0, turnAx
+  li    $v0, 4
+  syscall
+
+  li    $v0, 5
+  syscall                           # input x-coordinate
+  jal   checkBound                  # check for bound
+  beqz  $a1, inputTurnFailed
+  move  $t2, $v0                    # store x in t2
+
+  la    $a0, turnAy
+  li    $v0, 4
+  syscall
+
+  li    $v0, 5
+  syscall                           # input y-coordinate
+  jal   checkBound                  # check for bound
+  beqz  $a1, inputTurnFailed
+  move  $t3, $v0                    # store y in t3
+
+  # if playerB[t2][t3] is larger than 1 then false input, coordinate had already been shot, display error and have user re-input the coord
+  # if playerB[t2][t3] == 1 then HIT, s0++, display shot on map
+  # if playerB[t2][t3] == 0 then MISS, display missed shot on map
+
+  # playerB[t2][t3] += 2
+
+  j     exitTurn
+
+# playerBTurn:
+
+exitTurn:
+  li    $t0, 16
+  beq   $s0, $t0, playerAWin        # if hitCountA == 16 then player A win
+  beq   $s1, $t0, playerBWin        # if hitCountB == 16 then player B win
+
+  li    $t0, 1
+  sub   $t1, $t0, $t1               # toggling t1
+
+  # j     loopShoot
+
+playerAWin:
+
+playerBWin:
+
+exitGame:
 
   li    $v0, 10                      # exit program
   syscall
